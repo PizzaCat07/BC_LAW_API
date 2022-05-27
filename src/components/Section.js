@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import {useSelector} from 'react-redux';
+import BigList from 'react-native-big-list';
 
 import RenderHTML from 'react-native-render-html';
 

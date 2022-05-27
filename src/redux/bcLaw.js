@@ -2,9 +2,6 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-import Division from '../models/division';
-import Section from '../models/section';
-
 export const getLaw = createAsyncThunk(
   'bcLaw/getLaw',
   async (dispatch, getState) => {
@@ -20,7 +17,9 @@ const lawSlice = createSlice({
   initialState: {
     division: [],
     section: [],
-    status: null,
+    title: '',
+    part: '',
+    status: '',
   },
   extraReducers: {
     [getLaw.pending]: (state, action) => {
@@ -30,15 +29,24 @@ const lawSlice = createSlice({
       state.status = 'success';
       const divArray = [];
       const sectionArray = [];
+
       const html = action.payload;
       const $ = cheerio.load(html);
+
+      const title = {html: $('#title').html()};
+      const part = $('.part').text();
+
+      //console.log(title);
 
       //for each class = division get id and title
       $('.division').each(function (i, el) {
         const divTitle = $(el).text();
         const divId = $(el).attr('id');
 
-        divArray.push(new Division(divId, divTitle));
+        divArray.push({
+          id: divId,
+          divTitle: divTitle,
+        });
 
         $(this)
           //until next class = division and all class = section between them
@@ -49,11 +57,18 @@ const lawSlice = createSlice({
             const id = $(el).children('p').attr('id');
 
             //console.log(id, divID, divTitle);
-            sectionArray.push(new Section(id, divId, divTitle, section));
+            sectionArray.push({
+              id: id,
+              divId: divId,
+              divTitle: divTitle,
+              html: section,
+            });
           });
       });
       state.division = divArray;
       state.section = sectionArray;
+      state.title = title;
+      state.part = part;
     },
     [getLaw.rejected]: (state, action) => {
       state.status = 'failed';
