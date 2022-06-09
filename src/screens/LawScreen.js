@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {
   View,
@@ -12,7 +12,7 @@ import RenderHTML from 'react-native-render-html';
 
 import {getLaw} from '../redux/bcLaw';
 import SectionComp from '../components/Section';
-import {current} from '@reduxjs/toolkit';
+import {IndexPath, Layout, Select, SelectItem} from '@ui-kitten/components';
 
 const LawScreen = props => {
   const dispatch = useDispatch();
@@ -22,28 +22,39 @@ const LawScreen = props => {
   const part = useSelector(state => state.law.part);
 
   const {width} = useWindowDimensions();
+  const ref = useRef();
+
+  const dropDownIndex = 0;
 
   useEffect(() => {
     dispatch(getLaw());
   }, [dispatch]);
 
-  const [index, setIndex] = useState(0);
+  const scrollToIndex = dropDownIndex => {
+    ref.current.scrollToIndex({animated: true, index: dropDownIndex});
+  };
 
   return (
     <View>
-      <View>
-        <Button title="up" onPress={() => setIndex(index + 1)} />
-        <Button title="down" onPress={() => setIndex(index - 1)} />
-        <Text>{index}</Text>
-      </View>
       <View style={styles.header}>
         <RenderHTML contentWidth={width} source={title} />
         <Text style={styles.part}>{part}</Text>
       </View>
+      <View>
+        <Select
+          selectedIndex={dropDownIndex}
+          onSelect={index => scrollToIndex(index.row)}
+          placeholder="Select Division">
+          {division.map((item, index) => {
+            return <SelectItem title={item.divTitle} />;
+          })}
+        </Select>
+      </View>
       <FlatList
+        ref={ref}
         data={division}
-        initialScrollIndex={index}
-        renderItem={(item, index) => (
+        initialScrollIndex={dropDownIndex}
+        renderItem={item => (
           <View>
             <Text style={styles.title}>{item.item.divTitle}</Text>
             <SectionComp divId={item.item.id} />

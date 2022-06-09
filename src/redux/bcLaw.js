@@ -65,6 +65,8 @@ const lawSlice = createSlice({
             });
           });
       });
+
+      //console.log(sectionArray);
       state.division = divArray;
       state.section = sectionArray;
       state.title = title;

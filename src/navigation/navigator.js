@@ -7,7 +7,10 @@ const Stack = createStackNavigator();
 
 export const AppNavigator = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}>
       <Stack.Screen name="Law" component={LawScreen} />
     </Stack.Navigator>
   );
