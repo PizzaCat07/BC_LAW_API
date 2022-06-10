@@ -2,17 +2,20 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-export const getLaw = createAsyncThunk('bcLaw/getLaw', async Document_Id => {
-  const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${Document_Id}`;
-  //const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/96126_01`;
-  const html = await axios.get(url).then(res => res.data);
-  return html;
-});
+export const getLaw = createAsyncThunk(
+  'bcLaw/getLaw',
+  async (dispatch, getState) => {
+    const url =
+      'https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/11025_05';
+    const html = await axios.get(url).then(res => res.data);
+    return html;
+  },
+);
 
 const lawSlice = createSlice({
   name: 'bcLaw',
   initialState: {
-    content: [],
+    division: [],
     section: [],
     title: '',
     part: '',
@@ -24,7 +27,7 @@ const lawSlice = createSlice({
     },
     [getLaw.fulfilled]: (state, action) => {
       state.status = 'success';
-      const contentArray = [];
+      const divArray = [];
       const sectionArray = [];
 
       const html = action.payload;
@@ -33,22 +36,10 @@ const lawSlice = createSlice({
       const title = {html: $('#title').html()};
       const part = $('.part').text();
 
-      $('.section').each(function (i, el) {
-        const content = $(el).find('h4').text();
-        contentArray.push({
-          id: i,
-          title: content,
-        });
-
-        const section = $(el).html();
-        sectionArray.push({id: i, html: section});
-      });
-
-      //console.log(contentArray);
-      //console.log(sectionArray);
+      //console.log(title);
 
       //for each class = division get id and title
-      /* $('.division').each(function (i, el) {
+      $('.division').each(function (i, el) {
         const divTitle = $(el).text();
         const divId = $(el).attr('id');
 
@@ -73,10 +64,10 @@ const lawSlice = createSlice({
               html: section,
             });
           });
-      }); */
+      });
 
       //console.log(sectionArray);
-      state.content = contentArray;
+      state.division = divArray;
       state.section = sectionArray;
       state.title = title;
       state.part = part;

@@ -17,18 +17,18 @@ import SectionComp from '../components/Section';
 const LawScreen = props => {
   const dispatch = useDispatch();
 
-  const content = useSelector(state => state.law.content);
+  /* const division = useSelector(state => state.law.division);
   const title = useSelector(state => state.law.title);
   const part = useSelector(state => state.law.part);
-  const section = useSelector(state => state.law.section);
 
   const {width} = useWindowDimensions();
   const ref = useRef();
 
   const dropDownIndex = 0;
-
+ */
   useEffect(() => {
-    dispatch(getLaw(props.route.params.id));
+    dispatch(getLaw());
+    console.log('dispatch');
   }, [dispatch]);
 
   const scrollToIndex = dropDownIndex => {
@@ -37,7 +37,7 @@ const LawScreen = props => {
 
   return (
     <View>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <RenderHTML contentWidth={width} source={title} />
         <Text style={styles.part}>{part}</Text>
       </View>
@@ -45,22 +45,23 @@ const LawScreen = props => {
         <Select
           selectedIndex={dropDownIndex}
           onSelect={index => scrollToIndex(index.row)}
-          placeholder="Select Section">
-          {content.map((item, index) => {
-            return <SelectItem title={item.title} />;
+          placeholder="Select Division">
+          {division.map((item, index) => {
+            return <SelectItem title={item.divTitle} />;
           })}
         </Select>
       </View>
       <FlatList
         ref={ref}
-        data={section}
+        data={division}
         initialScrollIndex={dropDownIndex}
         renderItem={item => (
           <View>
-            <RenderHTML contentWidth={width} source={item.item} />
+            <Text style={styles.title}>{item.item.divTitle}</Text>
+            <SectionComp divId={item.item.id} />
           </View>
         )}
-      />
+      /> */}
     </View>
   );
 };
