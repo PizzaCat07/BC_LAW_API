@@ -40,12 +40,15 @@ const contentSlice = createSlice({
         const doc_title = $(el).children('CIVIX_DOCUMENT_TITLE').text();
         const doc_id = $(el).children('CIVIX_DOCUMENT_ID').text();
         const doc_order = $(el).children('CIVIX_DOCUMENT_ORDER').text();
+        const doc_status = $(el).children('CIVIX_DOCUMENT_STATUS').text();
 
-        apiData.push({
-          title: doc_title,
-          id: doc_id,
-          order: doc_order,
-        });
+        if (doc_status == null) {
+          apiData.push({
+            title: doc_title,
+            id: doc_id,
+            order: doc_order,
+          });
+        }
       });
 
       //console.log(apiData);

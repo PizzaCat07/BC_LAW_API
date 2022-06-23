@@ -20,17 +20,21 @@ import {
 
 import {getLaw} from '../redux/bcLaw';
 import SectionComp from '../components/Section';
+import {index} from 'cheerio/lib/api/traversing';
 
 const LawScreen = props => {
   const dispatch = useDispatch();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const content = useSelector(state => state.law.content);
   const title = useSelector(state => state.law.title);
   const part = useSelector(state => state.law.part);
   const section = useSelector(state => state.law.section);
 
+  props.navigation.setOptions({title}, [title]);
+
+  //group data by divTitle for sectionList
   /* const data = Object.values(
     section.reduce((group, el) => {
       group[el.divTitle] = group[el.divTitle] || {
@@ -53,15 +57,15 @@ const LawScreen = props => {
   const ref = useRef();
   const sectionRef = useRef();
 
-  const dropDownIndex = 0;
+  const [dropDownIndex, setDropDownIndex] = useState(0);
 
   useEffect(() => {
-    setLoading(false);
     dispatch(getLaw(props.route.params.id));
-    setLoading(true);
+    console.log('dispatch');
   }, [dispatch]);
 
   const scrollToIndex = dropDownIndex => {
+    console.log(dropDownIndex);
     ref.current.scrollToIndex({animated: true, index: dropDownIndex});
   };
 
@@ -73,7 +77,8 @@ const LawScreen = props => {
     });
   };
 
-  //console.log(section);
+  const renderRowNum = section.length;
+  console.log(renderRowNum);
 
   if (!loading) {
     return (
@@ -86,7 +91,7 @@ const LawScreen = props => {
     <View>
       <View style={styles.header}>
         {/* <RenderHTML contentWidth={width} source={title} /> */}
-        <Text>{title}</Text>
+        {/*  <Text style={styles.title}>{title}</Text> */}
         <Text style={styles.part}>{part}</Text>
         <Select
           selectedIndex={dropDownIndex}
@@ -100,17 +105,20 @@ const LawScreen = props => {
       <View style={styles.container}>
         <FlatList
           ref={ref}
+          initialNumToRender={renderRowNum}
           data={section}
           initialScrollIndex={dropDownIndex}
-          keyExtractor={item => item.id}
+          keyExtractor={(item, index) => item.key}
           onScrollToIndexFailed={info => {
-            const wait = new Promise(resolve => setTimeout(resolve, 500));
+            const wait = new Promise(resolve => setTimeout(resolve, 1000));
             wait.then(() => {
               ref.current?.scrollToIndex({index: info.index, animated: true});
             });
           }}
-          renderItem={item => (
+          renderItem={(item, index) => (
             <View>
+              <Text>{item.item.id}</Text>
+              <Text>{item.index}</Text>
               <RenderHTML contentWidth={width} source={item.item} />
             </View>
           )}
@@ -141,6 +149,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: 'blue',
     fontWeight: 'bold',
+    justifyContent: 'center',
+    alignContent: 'center',
   },
   part: {
     fontSize: 12,
@@ -150,9 +160,9 @@ const styles = StyleSheet.create({
     alignContent: 'center',
   },
   header: {
-    justifyContent: 'center',
-    alignContent: 'center',
-    paddingBottom: 10,
+    justifyContent: 'flex-start',
+    alignContent: 'flex-start',
+    height: '10%',
   },
   button: {
     flex: 1,
@@ -160,7 +170,9 @@ const styles = StyleSheet.create({
     width: 100,
   },
   container: {
-    height: '80%',
+    height: '90%',
+    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
   },
 });
 

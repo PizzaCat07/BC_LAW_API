@@ -34,14 +34,18 @@ const ContentScreen = props => {
         const doc_order = $(el).children('CIVIX_DOCUMENT_ORDER').text();
         const doc_type = $(el).children('CIVIX_DOCUMENT_TYPE').text();
         const index = $(el).children('CIVIX_DOCUMENT_INDEX').text();
+        // doc_status will only exist if CIVIX_DOCUMENT_STATUS = Repealed
+        const doc_status = $(el).children('CIVIX_DOCUMENT_STATUS').text();
 
-        dataArray.push({
-          title: doc_title,
-          id: doc_id,
-          order: doc_order,
-          type: doc_type,
-          index: index,
-        });
+        if (!doc_status) {
+          dataArray.push({
+            title: doc_title,
+            id: doc_id,
+            order: doc_order,
+            type: doc_type,
+            index: index,
+          });
+        }
       });
     dataArray.sort((a, b) => {
       return a.order - b.order;
@@ -63,7 +67,9 @@ const ContentScreen = props => {
         renderItem={item => (
           <TouchableOpacity
             onPress={() => {
-              console.log(item.item);
+              {
+                console.log(item);
+              }
               if (item.item.type == 'document') {
                 navigation.navigate('Law', {id: item.item.id});
               } else {

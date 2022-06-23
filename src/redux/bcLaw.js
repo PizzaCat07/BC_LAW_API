@@ -3,8 +3,9 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 export const getLaw = createAsyncThunk('bcLaw/getLaw', async Document_Id => {
-  //const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${Document_Id}`;
-  const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/02057_08#part7`;
+  const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${Document_Id}`;
+  //const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/02057_08#part7`;
+  //const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/02014_01`;
   const html = await axios.get(url).then(res => res.data);
   return html;
 });
@@ -31,11 +32,14 @@ const lawSlice = createSlice({
 
       const html = action.payload;
       const $ = cheerio.load(html);
+      $('#content').remove();
 
       //const title = {html: $('#title').html()};
-      const title = $('#title').text();
-      const part = $('.part').text();
-      const division = $('.division').text();
+      const act = $('#title').find('h2').text();
+      const chapter = $('#title').find('h3').text();
+      const title = act;
+      const part = $('#content').remove().find('.part').text();
+      const division = $('#content').remove().find('.division').text();
 
       if (!division) {
         divArray.push({
