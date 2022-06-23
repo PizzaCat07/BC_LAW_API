@@ -22,6 +22,7 @@ const SearchResultsScreen = props => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const getSearchResults = async searchTerm => {
+    console.log('search');
     const url = `http://www.bclaws.ca/civix/search/complete/fullsearch?q=${searchTerm}&s=0&e=20&nFrag=5&lFrag=100`;
     const response = await axios.get(url).then(res => res.data);
 

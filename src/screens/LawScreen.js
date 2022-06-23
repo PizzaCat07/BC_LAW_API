@@ -17,68 +17,144 @@ import {
   SelectGroup,
   SelectItem,
 } from '@ui-kitten/components';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import {useNavigation} from '@react-navigation/native';
 
 import {getLaw} from '../redux/bcLaw';
 import SectionComp from '../components/Section';
 import {index} from 'cheerio/lib/api/traversing';
 
 const LawScreen = props => {
-  const dispatch = useDispatch();
-
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
-
-  const content = useSelector(state => state.law.content);
-  const title = useSelector(state => state.law.title);
-  const part = useSelector(state => state.law.part);
-  const section = useSelector(state => state.law.section);
-
-  props.navigation.setOptions({title}, [title]);
-
-  //group data by divTitle for sectionList
-  /* const data = Object.values(
-    section.reduce((group, el) => {
-      group[el.divTitle] = group[el.divTitle] || {
-        title: el.divTitle,
-        data: [],
-      };
-      group[el.divTitle].data.push({
-        id: el.id,
-        divId: el.divId,
-        divTitle: el.divTitle,
-        html: el.html,
-      });
-      return group;
-    }, {}),
-  ); */
-
-  //console.log(data);
 
   const {width} = useWindowDimensions();
   const ref = useRef();
-  const sectionRef = useRef();
-
   const [dropDownIndex, setDropDownIndex] = useState(0);
 
-  useEffect(() => {
-    dispatch(getLaw(props.route.params.id));
-    console.log('dispatch');
-  }, [dispatch]);
+  const doc_id = props.route.params.id;
 
-  const scrollToIndex = dropDownIndex => {
-    console.log(dropDownIndex);
-    ref.current.scrollToIndex({animated: true, index: dropDownIndex});
-  };
+  console.log(doc_id);
 
-  const scrollToSection = () => {
-    sectionRef.current.scrollToLocation({
-      animated: true,
-      sectionIndex: 0,
-      itemIndex: 8,
-    });
+  const [section, setSection] = useState([]);
+
+  const getLaw = async doc_id => {
+    const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}`;
+    const response = await axios.get(url).then(res => res.data);
+
+    const contentArray = [];
+    const sectionArray = [];
+    const divArray = [];
+
+    const $ = cheerio.load(response);
+    $('#content').remove();
+
+    const act = $('#title').find('h2').text();
+    const chapter = $('#title').find('h3').text();
+    const title = act;
+    const part = $('#content').remove().find('.part').text();
+    const division = $('#content').remove().find('.division').text();
+    props.navigation.setOptions({title}, [title]);
+
+    //console.log(division);
+
+    if (!division) {
+      divArray.push({
+        id: 1,
+        divTitle: '',
+      });
+
+      $('.section').each(function (i, el) {
+        const content = $(el).find('h4').text();
+        contentArray.push({
+          id: i,
+          title: content,
+        });
+
+        const id = $(el).children('p').attr('id');
+
+        const section = $(el).html();
+        sectionArray.push({
+          id: id,
+          divId: '1',
+          divTitle: '',
+          html: section,
+        });
+      });
+    } else {
+      $('.division').each(function (i, el) {
+        const divTitle = $(el).text();
+        const divHtml = $(el).html();
+        const divId = $(el).attr('id');
+
+        contentArray.push({
+          id: i,
+          title: divTitle,
+        });
+
+        divArray.push({
+          id: divId,
+          divTitle: divTitle,
+        });
+
+        sectionArray.push({
+          id: divId,
+          divId: divId,
+          divTitle: divTitle,
+          html: divHtml,
+        });
+
+        $(this)
+          //until next class = division and all class = section between them
+          .nextUntil('.division', '.section')
+          .each(function (i, el) {
+            const content = $(el).find('h4').text();
+
+            contentArray.push({
+              id: i,
+              title: content,
+            });
+
+            const section = $(el).html();
+            //get attr = id from first p tag of children
+            const id = $(el).children('p').attr('id');
+
+            //console.log(id, divID, divTitle);
+            sectionArray.push({
+              id: id,
+              divId: divId,
+              divTitle: divTitle,
+              html: section,
+            });
+          });
+      });
+    }
+    setSection(sectionArray);
   };
 
   const renderRowNum = section.length;
-  console.log(renderRowNum);
+
+  useEffect(() => {
+    getLaw(doc_id);
+  }, [doc_id]);
+
+  const tagsStyles = {
+    body: {
+      whiteSpace: 'normal',
+      color: 'black',
+      backgroundColor: 'powderblue',
+    },
+    h4: {
+      color: 'black',
+    },
+  };
+
+  const classesStyles = {
+    ep_hit: {
+      backgroundColor: 'yellow',
+    },
+  };
 
   if (!loading) {
     return (
@@ -88,63 +164,41 @@ const LawScreen = props => {
     );
   }
   return (
-    <View>
-      <View style={styles.header}>
-        {/* <RenderHTML contentWidth={width} source={title} /> */}
-        {/*  <Text style={styles.title}>{title}</Text> */}
-        <Text style={styles.part}>{part}</Text>
-        <Select
-          selectedIndex={dropDownIndex}
-          onSelect={index => scrollToIndex(index.row)}
-          placeholder="Select Section">
-          {content.map((item, index) => {
-            return <SelectItem title={item.title} />;
-          })}
-        </Select>
-      </View>
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <View style={styles.listContainer}>
         <FlatList
-          ref={ref}
-          initialNumToRender={renderRowNum}
           data={section}
-          initialScrollIndex={dropDownIndex}
-          keyExtractor={(item, index) => item.key}
-          onScrollToIndexFailed={info => {
-            const wait = new Promise(resolve => setTimeout(resolve, 1000));
-            wait.then(() => {
-              ref.current?.scrollToIndex({index: info.index, animated: true});
-            });
-          }}
+          keyExtractor={item => item.key}
           renderItem={(item, index) => (
             <View>
-              <Text>{item.item.id}</Text>
-              <Text>{item.index}</Text>
-              <RenderHTML contentWidth={width} source={item.item} />
+              {/* <Text style={styles.text}>{item.item.id}</Text>
+              <Text>{item.index}</Text> */}
+              <RenderHTML
+                contentWidth={width}
+                source={item.item}
+                tagsStyles={tagsStyles}
+                classesStyles={classesStyles}
+                renderersProps={{
+                  a: {
+                    onPress: (evt, href) => {
+                      const doc_id = href.split('/').pop();
+                      console.log(doc_id);
+                      navigation.push('Law', {id: doc_id});
+                    },
+                  },
+                }}
+              />
             </View>
           )}
         />
-      </View>
-      <View>
-        {/*  <SectionList
-          ref={sectionRef}
-          sections={data}
-          keyExtractor={(item, index) => item + index}
-          initialScrollIndex={dropDownIndex}
-          renderItem={({item}) => (
-            <View>
-              <RenderHTML contentWidth={width} source={item} />
-            </View>
-          )}
-          renderSectionHeader={({section: {title}}) => (
-            <Text style={styles.header}>{title}</Text>
-          )}
-        /> */}
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {flex: 1},
+  text: {color: 'red'},
   title: {
     fontSize: 15,
     color: 'blue',
@@ -169,8 +223,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: 100,
   },
-  container: {
-    height: '90%',
+  listContainer: {
+    height: '100%',
     alignContent: 'flex-start',
     justifyContent: 'flex-start',
   },

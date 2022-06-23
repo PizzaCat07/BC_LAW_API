@@ -19,12 +19,14 @@ import {
 } from '@ui-kitten/components';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import {useNavigation} from '@react-navigation/native';
 
 import {getLaw} from '../redux/bcLaw';
 import SectionComp from '../components/Section';
 import {index} from 'cheerio/lib/api/traversing';
 
 const LawSearchScreen = props => {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
 
   const {width} = useWindowDimensions();
@@ -176,6 +178,15 @@ const LawSearchScreen = props => {
                 source={item.item}
                 tagsStyles={tagsStyles}
                 classesStyles={classesStyles}
+                renderersProps={{
+                  a: {
+                    onPress: (evt, href) => {
+                      const doc_id = href.split('/').pop();
+                      console.log(doc_id);
+                      navigation.push('Law', {id: doc_id});
+                    },
+                  },
+                }}
               />
             </View>
           )}
