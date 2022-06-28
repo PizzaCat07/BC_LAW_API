@@ -20,11 +20,14 @@ const SearchResultsScreen = props => {
   const {width} = useWindowDimensions();
   const [searchResultArray, setSearchResultArray] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [refresh, setRefresh] = useState(false);
 
   const getSearchResults = async searchTerm => {
-    console.log('search');
+    setRefresh(false);
     const url = `http://www.bclaws.ca/civix/search/complete/fullsearch?q=${searchTerm}&s=0&e=20&nFrag=5&lFrag=100`;
     const response = await axios.get(url).then(res => res.data);
+
+    console.log(url);
 
     let dataArray = [];
     let html = '';
@@ -64,6 +67,7 @@ const SearchResultsScreen = props => {
       setSearchResultArray(dataArray);
       //console.log(dataArray);
     });
+    setRefresh(true);
     //console.log(searchResultArray);
   };
 
