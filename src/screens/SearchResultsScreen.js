@@ -30,6 +30,10 @@ const SearchResultsScreen = props => {
     let html = '';
     const $ = cheerio.load(response, {xmlMode: true});
 
+    function onlyNumbers(str) {
+      return /^[0-9_]+$/.test(str);
+    }
+
     $('doc').each(function (i, el) {
       html = '';
       const doc_title = $(el).children('CIVIX_DOCUMENT_TITLE').text();
@@ -40,7 +44,7 @@ const SearchResultsScreen = props => {
       const text = $(el).children('frag').text();
       const textHtml = $(el).children('frag').html();
 
-      if (!doc_status) {
+      if (!doc_status && onlyNumbers(doc_id)) {
         $(el)
           .children('frag')
           .each(function (i, el) {
