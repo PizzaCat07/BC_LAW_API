@@ -42,22 +42,23 @@ const LawScreen = props => {
   const getLaw = async doc_id => {
     const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}`;
     const response = await axios.get(url).then(res => res.data);
+    console.log(url);
 
     const contentArray = [];
     const sectionArray = [];
     const divArray = [];
 
     const $ = cheerio.load(response);
-    $('#content').remove();
+    //$('#content').remove();
 
     const act = $('#title').find('h2').text();
     const chapter = $('#title').find('h3').text();
     const title = act;
-    const part = $('#content').remove().find('.part').text();
+    const part = $('.part').text();
     const division = $('#content').remove().find('.division').text();
     props.navigation.setOptions({title}, [title]);
 
-    //console.log(division);
+    console.log(part);
 
     if (!division) {
       divArray.push({

@@ -14,14 +14,12 @@ const ContentScreen = props => {
   const [contentArray, setContentArray] = useState([]);
 
   const getContent = async Document_Id => {
+    const url = `https://www.bclaws.gov.bc.ca/civix/content/complete/statreg/${Document_Id}`;
+
     if (!Document_Id) {
       Document_Id = '';
     }
-    const response = await axios
-      .get(
-        `https://www.bclaws.gov.bc.ca/civix/content/complete/statreg/${Document_Id}`,
-      )
-      .then(res => res.data);
+    const response = await axios.get(url).then(res => res.data);
 
     let dataArray = [];
     const $ = cheerio.load(response, {xmlMode: true});
