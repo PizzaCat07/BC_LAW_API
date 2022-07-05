@@ -21,11 +21,11 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import {useNavigation} from '@react-navigation/native';
 
-import {getLaw} from '../redux/bcLaw';
 import SectionComp from '../components/Section';
 import {index} from 'cheerio/lib/api/traversing';
 
 const LawScreen = props => {
+  console.log('refresh');
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
 
@@ -35,9 +35,11 @@ const LawScreen = props => {
 
   const doc_id = props.route.params.id;
 
-  console.log(doc_id);
+  //console.log(doc_id);
 
   const [section, setSection] = useState([]);
+  const [content, setContent] = useState([]);
+  const [refresh, setRefresh] = useState(false);
 
   const getLaw = async doc_id => {
     const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}`;
@@ -46,108 +48,75 @@ const LawScreen = props => {
 
     const contentArray = [];
     const sectionArray = [];
-    const divArray = [];
 
     const $ = cheerio.load(response);
-    //$('#content').remove();
+    $('#contents,.copyright').remove();
 
     const act = $('#title').find('h2').text();
     const chapter = $('#title').find('h3').text();
     const title = act;
-    const part = $('.part').text();
-    const division = $('#content').remove().find('.division').text();
+    $('.part')
+      .wrapInner((i, el) => `<h2>${el}</h2>`)
+      .html();
+    const part = $('.part').html();
+
+    $('.division')
+      .wrapInner((i, el) => `<h3>${el}</h3>`)
+      .html();
+
     props.navigation.setOptions({title}, [title]);
 
-    console.log(part);
+    $('#title')
+      .nextAll()
+      .each(function (i, el) {
+        const content = $(el).find('h4,h3,h2').text();
+        const section = $(el).html();
 
-    if (!division) {
-      divArray.push({
-        id: 1,
-        divTitle: '',
-      });
+        contentArray.push(content);
 
-      $('.section').each(function (i, el) {
-        const content = $(el).find('h4').text();
-        contentArray.push({
+        sectionArray.push({
           id: i,
+          html: section,
+          act: act,
           title: content,
         });
-
-        const id = $(el).children('p').attr('id');
-
-        const section = $(el).html();
-        sectionArray.push({
-          id: id,
-          divId: '1',
-          divTitle: '',
-          html: section,
-        });
       });
-    } else {
-      $('.division').each(function (i, el) {
-        const divTitle = $(el).text();
-        const divHtml = $(el).html();
-        const divId = $(el).attr('id');
 
-        contentArray.push({
-          id: i,
-          title: divTitle,
-        });
-
-        divArray.push({
-          id: divId,
-          divTitle: divTitle,
-        });
-
-        sectionArray.push({
-          id: divId,
-          divId: divId,
-          divTitle: divTitle,
-          html: divHtml,
-        });
-
-        $(this)
-          //until next class = division and all class = section between them
-          .nextUntil('.division', '.section')
-          .each(function (i, el) {
-            const content = $(el).find('h4').text();
-
-            contentArray.push({
-              id: i,
-              title: content,
-            });
-
-            const section = $(el).html();
-            //get attr = id from first p tag of children
-            const id = $(el).children('p').attr('id');
-
-            //console.log(id, divID, divTitle);
-            sectionArray.push({
-              id: id,
-              divId: divId,
-              divTitle: divTitle,
-              html: section,
-            });
-          });
-      });
-    }
     setSection(sectionArray);
+    setContent(contentArray);
+
+    setRefresh(true);
   };
 
   const renderRowNum = section.length;
 
+  console.log(content);
+
   useEffect(() => {
+    setRefresh(false);
     getLaw(doc_id);
-  }, [doc_id]);
+  }, []);
 
   const tagsStyles = {
     body: {
       whiteSpace: 'normal',
       color: 'black',
       backgroundColor: 'powderblue',
+      fontSize: 14,
+    },
+    h2: {
+      color: 'red',
+      fontSize: 18,
+      textAlign: 'center',
+    },
+    h3: {
+      color: 'green',
+      fontSize: 16,
+      textAlign: 'center',
     },
     h4: {
-      color: 'black',
+      color: 'blue',
+      fontSize: 14,
     },
   };
 
@@ -168,8 +137,9 @@ const LawScreen = props => {
     <View style={styles.container}>
       <View style={styles.listContainer}>
         <FlatList
+          ref={ref}
           data={section}
-          keyExtractor={item => item.key}
+          keyExtractor={item => item.id}
           renderItem={(item, index) => (
             <View>
               {/* <Text style={styles.text}>{item.item.id}</Text>

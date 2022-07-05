@@ -38,99 +38,47 @@ const LawSearchScreen = props => {
   console.log(doc_id, searchTerm);
 
   const [section, setSection] = useState([]);
+  const [refresh, setRefresh] = useState(false);
 
   const getLawSearch = async (doc_id, searchTerm) => {
     const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}/search/'${searchTerm}'`;
     const response = await axios.get(url).then(res => res.data);
+    console.log(url);
 
     const contentArray = [];
     const sectionArray = [];
-    const divArray = [];
 
     const $ = cheerio.load(response);
-    $('#content').remove();
+    $('#contents,.copyright').remove();
 
     const act = $('#title').find('h2').text();
     const chapter = $('#title').find('h3').text();
     const title = act;
-    const part = $('#content').remove().find('.part').text();
-    const division = $('#content').remove().find('.division').text();
+    $('.part')
+      .wrapInner((i, el) => `<h2>${el}</h2>`)
+      .html();
+    const part = $('.part').html();
+
+    $('.division')
+      .wrapInner((i, el) => `<h3>${el}</h3>`)
+      .html();
+    const division = $('.division').html();
+
     props.navigation.setOptions({title}, [title]);
 
-    //console.log(division);
-
-    if (!division) {
-      divArray.push({
-        id: 1,
-        divTitle: '',
-      });
-
-      $('.section').each(function (i, el) {
-        const content = $(el).find('h4').text();
-        contentArray.push({
-          id: i,
-          title: content,
-        });
-
+    $('#title')
+      .nextAll()
+      .each(function (i, el) {
         const id = $(el).children('p').attr('id');
-
         const section = $(el).html();
+        console.log(id);
         sectionArray.push({
-          id: id,
-          divId: '1',
-          divTitle: '',
+          id: i,
           html: section,
         });
+        setSection(sectionArray);
       });
-    } else {
-      $('.division').each(function (i, el) {
-        const divTitle = $(el).text();
-        const divHtml = $(el).html();
-        const divId = $(el).attr('id');
-
-        contentArray.push({
-          id: i,
-          title: divTitle,
-        });
-
-        divArray.push({
-          id: divId,
-          divTitle: divTitle,
-        });
-
-        sectionArray.push({
-          id: divId,
-          divId: divId,
-          divTitle: divTitle,
-          html: divHtml,
-        });
-
-        $(this)
-          //until next class = division and all class = section between them
-          .nextUntil('.division', '.section')
-          .each(function (i, el) {
-            const content = $(el).find('h4').text();
-
-            contentArray.push({
-              id: i,
-              title: content,
-            });
-
-            const section = $(el).html();
-            //get attr = id from first p tag of children
-            const id = $(el).children('p').attr('id');
-
-            //console.log(id, divID, divTitle);
-            sectionArray.push({
-              id: id,
-              divId: divId,
-              divTitle: divTitle,
-              html: section,
-            });
-          });
-      });
-    }
-    setSection(sectionArray);
+    setRefresh(true);
   };
 
   const renderRowNum = section.length;
@@ -144,9 +92,21 @@ const LawSearchScreen = props => {
       whiteSpace: 'normal',
       color: 'black',
       backgroundColor: 'powderblue',
+      fontSize: 14,
+    },
+    h2: {
+      color: 'red',
+      fontSize: 18,
+      textAlign: 'center',
+    },
+    h3: {
+      color: 'green',
+      fontSize: 16,
+      textAlign: 'center',
     },
     h4: {
-      color: 'black',
+      color: 'blue',
+      fontSize: 14,
     },
   };
 
