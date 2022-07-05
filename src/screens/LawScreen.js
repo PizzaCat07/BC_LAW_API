@@ -34,6 +34,13 @@ const LawScreen = props => {
   const [dropDownIndex, setDropDownIndex] = useState(0);
 
   const doc_id = props.route.params.id;
+  const searchTerm = props.route.params.searchTerm;
+
+  if (!searchTerm) {
+    console.log('no search');
+  } else {
+    console.log(searchTerm);
+  }
 
   //console.log(doc_id);
 
@@ -41,11 +48,7 @@ const LawScreen = props => {
   const [content, setContent] = useState([]);
   const [refresh, setRefresh] = useState(false);
 
-  const getLaw = async doc_id => {
-    const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}`;
-    const response = await axios.get(url).then(res => res.data);
-    console.log(url);
-
+  const formatData = response => {
     const contentArray = [];
     const sectionArray = [];
 
@@ -88,13 +91,35 @@ const LawScreen = props => {
     setRefresh(true);
   };
 
-  const renderRowNum = section.length;
+  const getLaw = async doc_id => {
+    const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}`;
+    const response = await axios.get(url).then(res => res.data);
+    console.log(url);
+    formatData(response);
+  };
+
+  const getLawSearch = async (doc_id, searchTerm) => {
+    const url = `https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/${doc_id}/search/'${searchTerm}'`;
+    const response = await axios.get(url).then(res => res.data);
+    console.log(url);
+    formatData(response);
+  };
+
+  const scrollToIndex = dropDownIndex => {
+    console.log(dropDownIndex);
+    ref.current.scrollToIndex({animated: true, index: dropDownIndex});
+  };
 
   console.log(content);
 
   useEffect(() => {
-    setRefresh(false);
-    getLaw(doc_id);
+    if (!searchTerm) {
+      setRefresh(false);
+      getLaw(doc_id);
+    } else {
+      setRefresh(false);
+      getLawSearch(doc_id, searchTerm);
+    }
   }, []);
 
   const tagsStyles = {
@@ -135,11 +160,28 @@ const LawScreen = props => {
   }
   return (
     <View style={styles.container}>
+      <View>
+        <Select
+          selectedIndex={dropDownIndex}
+          placeholder="Select Section"
+          onSelect={index => scrollToIndex(index.row)}
+          style={styles.select}>
+          {content.map((item, index) => {
+            return <SelectItem title={item} />;
+          })}
+        </Select>
+      </View>
       <View style={styles.listContainer}>
         <FlatList
           ref={ref}
           data={section}
           keyExtractor={item => item.id}
+          onScrollToIndexFailed={info => {
+            const wait = new Promise(resolve => setTimeout(resolve, 1000));
+            wait.then(() => {
+              ref.current?.scrollToIndex({index: info.index, animated: true});
+            });
+          }}
           renderItem={(item, index) => (
             <View>
               {/* <Text style={styles.text}>{item.item.id}</Text>
@@ -198,6 +240,9 @@ const styles = StyleSheet.create({
     height: '100%',
     alignContent: 'flex-start',
     justifyContent: 'flex-start',
+  },
+  select: {
+    fontSize: 12,
   },
 });
 

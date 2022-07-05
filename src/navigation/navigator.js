@@ -23,7 +23,7 @@ const SearchStackNavigator = () => {
       />
       <SearchStack.Screen
         name="LawSearch"
-        component={LawSearchScreen}
+        component={LawScreen}
         options={({route, navigation}) => {
           const title = route.params.title;
           return {
